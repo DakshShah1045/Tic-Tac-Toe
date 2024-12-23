@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        :root {
+            --bg-light: #f4f4f9;
+            --text-light: #333;
+            --bg-dark: #333;
+            --text-dark: #f4f4f9;
+            --primary: #6200ea;
+            --secondary: #03dac5;
+        }
+
+        [data-theme="light"] {
+            --bg: var(--bg-light);
+            --text: var(--text-light);
+        }
+
+        [data-theme="dark"] {
+            --bg: var(--bg-dark);
+            --text: var(--text-dark);
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .cell {
+            background-color: var(--secondary);
+            border: none;
+            border-radius: 5px;
+            font-size: 1.5rem;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .controls button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary);
+            color: var(--text);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background-color: var(--secondary);
+        }
+
+        @media (max-width: 600px) {
+            .cell {
+                height: 60px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        <div class="scoreboard">
+            <div>Player X: <span id="scoreX">0</span></div>
+            <div>Player O: <span id="scoreO">0</span></div>
+        </div>
+        <div class="board" id="board"></div>
+        <div class="controls">
+            <button id="reset">Reset</button>
+            <button id="toggleTheme">Toggle Dark Mode</button>
+        </div>
+    </div>
+    <script>
+        const board = document.getElementById('board');
+        const scoreX = document.getElementById('scoreX');
+        const scoreO = document.getElementById('scoreO');
+        const resetButton = document.getElementById('reset');
+        const toggleThemeButton = document.getElementById('toggleTheme');
+        
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let scores = { X: 0, O: 0 };
+        let boardState = Array(9).fill(null);
+
+        const loadScores = () => {
+            const storedScores = JSON.parse(localStorage.getItem('ticTacToeScores'));
+            if (storedScores) {
+                scores = storedScores;
+                scoreX.textContent = scores.X;
+                scoreO.textContent = scores.O;
+            }
+        };
+
+        const saveScores = () => {
+            localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+        };
+
+        const renderBoard = () => {
+            board.innerHTML = '';
+            boardState.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add('cell');
+                cellElement.textContent = cell;
+                cellElement.addEventListener('click', () => handleCellClick(index));
+                board.appendChild(cellElement);
+            });
+        };
+
+        const handleCellClick = (index) => {
+            if (!gameActive || boardState[index]) return;
+            boardState[index] = currentPlayer;
+            renderBoard();
+            if (checkWinner()) {
+                scores[currentPlayer]++;
+                saveScores();
+                scoreX.textContent = scores.X;
+                scoreO.textContent = scores.O;
+                alert(`Player ${currentPlayer} wins!`);
+                gameActive = false;
+            } else if (boardState.every(cell => cell)) {
+                alert('It\'s a draw!');
+                gameActive = false;
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            }
+        };
+
+        const checkWinner = () => {
+            const winningCombos = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            return winningCombos.some(combo => 
+                combo.every(index => boardState[index] === currentPlayer)
+            );
+        };
+
+        resetButton.addEventListener('click', () => {
+            boardState = Array(9).fill(null);
+            gameActive = true;
+            currentPlayer = 'X';
+            renderBoard();
+        });
+
+        toggleThemeButton.addEventListener('click', () => {
+            const theme = document.body.getAttribute('data-theme');
+            document.body.setAttribute('data-theme', theme === 'light' ? 'dark' : 'light');
+        });
+
+        loadScores();
+        renderBoard();
+    </script>
+</body>
+</html>
